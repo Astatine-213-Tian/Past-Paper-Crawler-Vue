@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <!-- import CSS -->
+    <link rel="stylesheet" type="text/css" href="./style/theme/index.css">
+</head>
+<body>
+
+<!-- import Vue before Element -->
+<script src="./vue.js"></script>
+<!-- import JavaScript -->
+<script src="./index.js"></script>
+
+<div id="app" style="height: 97vh;">
+    <template>
+        <el-container style="border: 1px solid #eeeeee; height: 100%" v-loading="loading">
+            <el-aside width="200px">
+                <el-menu
+                        :default-active="activeIndex"
+                        style="border: none"
+                        @select="menuSelected"
+                        :default-openeds="['star']"
+                >
+<!--                    <el-menu-item index="0">-->
+<!--                        <el-autocomplete-->
+<!--                                class="inline-input"-->
+<!--                                prefix-icon="el-icon-search"-->
+<!--                                size="medium"-->
+<!--                                placeholder="请输入内容"-->
+<!--                                :trigger-on-focus="false">-->
+<!--                        </el-autocomplete>-->
+<!--                    </el-menu-item>-->
+<!--                    <div style="padding-top: 15px;-->
+<!--                                padding-bottom: 15px;-->
+<!--                                display: flex;-->
+<!--                                flex-direction: column;-->
+<!--                                align-items: center">-->
+<!--                        <span>-->
+<!--                            <h3 style="margin-block-start: 0; margin-block-end: 0">-->
+<!--                                Past Paper Crawler-->
+<!--                            </h3>-->
+<!--                            <p style="margin-block-start: 0; margin-block-end: 0; color: gray; font-size: 14px">-->
+<!--                                A best access to past papers-->
+<!--                            </p>-->
+<!--                            <el-tag type="success" size="mini">-->
+<!--                                {{ applicationVersion }}-->
+<!--                            </el-tag>-->
+<!--                        </span>-->
+<!--                    </div>-->
+
+
+                    <el-submenu index="star">
+                        <template slot="title">
+                            <i class="el-icon-receiving"></i>
+                            Starred
+                        </template>
+
+                        <el-menu-item v-for="each in starred">
+                            <div style="display: flex; align-items: center;">
+                                <el-link
+                                        :underline="false"
+                                        @click="visitFolder(each.url)"
+                                        style="display: inline; flex: 1; text-overflow: ellipsis; overflow: hidden">
+                                    {{each.name}}
+                                </el-link>
+                                <el-link
+                                        :underline="false"
+                                        icon="el-icon-close"
+                                        @click="unStarFolder(each.url)">
+                                </el-link>
+                            </div>
+                        </el-menu-item>
+
+                    </el-submenu>
+
+                    <el-menu-item index="main">
+                        <i class="el-icon-collection"></i>
+                        Browse
+                    </el-menu-item>
+
+                    <el-menu-item index="download">
+                       <i class="el-icon-download"></i>
+                        Downloading
+                    </el-menu-item>
+
+                    <el-menu-item index="config">
+                        <i class="el-icon-setting"></i>
+                        Preferences
+                    </el-menu-item>
+                </el-menu>
+            </el-aside>
+
+            <transition name="slide-fade" mode="out-in">
+                <el-container v-if="activeIndex === 'main'">
+                    <el-header style="display: flex; border-bottom: 1px solid #eeeeee; border-left: 1px solid #eeeeee">
+                        <el-breadcrumb
+                                separator-class="el-icon-arrow-right"
+                                style="align-items: center; font-size: 16px; display: flex; overflow: auto; text-overflow: ellipsis; white-space: nowrap"
+                        >
+                            <el-breadcrumb-item>
+                                <i class="el-icon-s-home"></i>
+                                <el-link @click="visitHome()" style="font-size: 16px">Home Page</el-link>
+                            </el-breadcrumb-item>
+                            <el-breadcrumb-item v-for="(item, index) in path">
+                                <el-link @click="navBread(index)" style="font-size: 16px; display: inline;"> {{item}} </el-link>
+                            </el-breadcrumb-item>
+                        </el-breadcrumb>
+                    </el-header>
+                    <el-main style="border-left: 1px solid #eeeeee; padding-top: 10px">
+                        <!--                    <el-row style="height: 37px; display: flex; justify-content: center; align-items: center" :gutter="2">-->
+                        <!--                        <el-col :span="2">-->
+                        <!--                            <div>-->
+                        <!--                                Filter:-->
+                        <!--                            </div>-->
+                        <!--                        </el-col>-->
+
+                        <!--                        <el-col :span="22">-->
+                        <!--                            <el-row :gutter="7">-->
+                        <!--                                <el-col :span="5">-->
+                        <!--                                    <el-select-->
+                        <!--                                            v-if="displayFilter"-->
+                        <!--                                            v-model="yearsSelected"-->
+                        <!--                                            multiple-->
+                        <!--                                            collapse-tags-->
+                        <!--                                            clearable-->
+                        <!--                                            placeholder="请选择"-->
+                        <!--                                            @change="filterByYear()">-->
+                        <!--                                        <el-option-->
+                        <!--                                                v-for="year in years"-->
+                        <!--                                                :value="year">-->
+                        <!--                                        </el-option>-->
+                        <!--                                    </el-select>-->
+
+                        <!--                                    <el-select-->
+                        <!--                                        v-else-->
+                        <!--                                        disabled>-->
+                        <!--                                    </el-select>-->
+                        <!--                                </el-col>-->
+
+                        <!--                                <el-col :span="5">-->
+                        <!--                                    <el-select-->
+                        <!--                                            v-model="seasonsSelected"-->
+                        <!--                                            multiple-->
+                        <!--                                            collapse-tags-->
+                        <!--                                            clearablepych-->
+                        <!--                                            placeholder="请选择">-->
+                        <!--                                        <el-option-->
+                        <!--                                                v-for="season in seasons"-->
+                        <!--                                                :value="season">-->
+                        <!--                                        </el-option>-->
+                        <!--                                    </el-select>-->
+                        <!--                                </el-col>-->
+
+                        <!--                                <el-col :span="5">-->
+                        <!--                                    <el-select-->
+                        <!--                                            v-model="numsSelected"-->
+                        <!--                                            multiple-->
+                        <!--                                            collapse-tags-->
+                        <!--                                            clearable-->
+                        <!--                                            placeholder="请选择">-->
+                        <!--                                        <el-option-->
+                        <!--                                                v-for="num in nums"-->
+                        <!--                                                :value="num">-->
+                        <!--                                        </el-option>-->
+                        <!--                                    </el-select>-->
+                        <!--                                </el-col>-->
+
+                        <!--                                <el-col :span="5">-->
+                        <!--                                    <el-select-->
+                        <!--                                            v-model="regionsSelected"-->
+                        <!--                                            multiple-->
+                        <!--                                            collapse-tags-->
+                        <!--                                            clearable-->
+                        <!--                                            placeholder="请选择">-->
+                        <!--                                        <el-option-->
+                        <!--                                                v-for="region in regions"-->
+                        <!--                                                :value="region">-->
+                        <!--                                        </el-option>-->
+                        <!--                                    </el-select>-->
+                        <!--                                </el-col>-->
+
+                        <!--                                <el-col :span="4">-->
+                        <!--                                    <el-select-->
+                        <!--                                            v-model="typesSelected"-->
+                        <!--                                            multiple-->
+                        <!--                                            collapse-tags-->
+                        <!--                                            placeholder="请选择">-->
+                        <!--                                        <el-option-->
+                        <!--                                                v-for="type in types"-->
+                        <!--                                                :value="type">-->
+                        <!--                                        </el-option>-->
+                        <!--                                    </el-select>-->
+                        <!--                                </el-col>-->
+
+                        <!--                            </el-row>-->
+                        <!--                        </el-col>-->
+
+                        <!--                    </el-row>-->
+
+                        <el-table v-loading="tableLoading"
+                                  :data="tableData.filter(data => !searchTable || data.name.toLowerCase().includes(searchTable.toLowerCase()))"
+                                  style="width: 100%"
+                                  height="100%"
+                                  @selection-change="handleSelectionChange"
+                                  :default-sort = "{prop: 'name', order: 'ascending'}">
+
+                            <el-table-column
+                                    type="selection"
+                                    width="45">
+                            </el-table-column>
+
+                            <el-table-column prop="name" label="Folder/File Name" sortable show-overflow-tooltip>
+                                <template slot-scope="scope">
+                                    <el-link
+                                            v-if="scope.row.type === 'folder'"
+                                            icon="el-icon-folder-opened"
+                                            @click="visitFolder(scope.row.url)"
+                                    >
+                                        {{scope.row.name}}
+                                    </el-link>
+                                    <el-link
+                                            v-else-if="scope.row.type === 'pdf'"
+                                            icon="el-icon-document"
+                                            @click="previewPDF(scope.row.url)"
+                                    >
+                                        {{scope.row.name}}
+                                    </el-link>
+                                    <div v-else-if="scope.row.type === 'mp3'">
+                                        <i class="el-icon-headset"></i>
+                                        <span>{{scope.row.name}}</span>
+                                    </div>
+
+                                    <div v-else>
+                                        <i class="el-icon-question"></i>
+                                        <span>{{scope.row.name}}</span>
+                                    </div>
+                                </template>
+                            </el-table-column>
+
+                            <el-table-column fixed="right" width="160">
+                                <template slot="header" slot-scope="scope">
+                                    <el-input v-model="searchTable" size="mini" placeholder="输入关键字搜索" prefix-icon="el-icon-search"/>
+                                </template>
+                            </el-table-column>
+
+                            <el-table-column fixed="right" width="150">
+                                <template slot="header" slot-scope="scope">
+                                    <el-button
+                                            type="primary"
+                                            size="medium"
+                                            @click="handleClickDownload"
+                                    >
+                                        Download
+                                    </el-button>
+                                </template>
+
+                                <template slot-scope="scope">
+                                    <div v-if="scope.row.type === 'folder'">
+                                        <el-link
+                                                v-if="scope.row.starred" @click="scope.row.starred = false; unStarFolder(scope.row.url)"
+                                                type="success" icon="el-icon-star-on"
+                                        >
+                                            Starred
+                                        </el-link>
+                                        <el-link
+                                                v-else
+                                                @click="scope.row.starred = true; starFolder(scope.row.name, scope.row.url)"
+                                                type="primary" icon="el-icon-star-off"
+                                        >
+                                            Star
+                                        </el-link>
+                                    </div>
+
+                                    <!--                                <div v-if="scope.row.type === 'pdf'">-->
+                                    <!--                                    <span> Preview available </span>-->
+                                    <!--                                </div>-->
+                                </template>
+                            </el-table-column>
+
+                        </el-table>
+
+                    </el-main>
+                </el-container>
+                <el-container v-else-if="activeIndex === 'download'">
+                    <el-table
+                            :show-header=true
+                            :data="shownDownloadTaskList"
+                            style="width: 100%"
+                            :row-key="getDownloadRowKey"
+                            height="100%"
+                            empty-text="No data"
+                    >
+                        <el-table-column>
+                            <template slot="header" slot-scope="scope">
+                                <div style="display: flex; flex-direction: row">
+                                    <el-button
+                                            slot="reference"
+                                            size="mini"
+                                            type="primary"
+                                            @click="handleResumeAll"
+                                    >
+                                        Start All
+                                    </el-button>
+                                    <el-button
+                                            slot="reference"
+                                            size="mini"
+                                            type="primary"
+                                            @click="handleAbortAll"
+                                    >
+                                        Stop All
+                                    </el-button>
+                                    <el-button
+                                            slot="reference"
+                                            size="mini"
+                                            type="primary"
+                                            @click="handleClearDownload"
+                                    >
+                                        Clear
+                                    </el-button>
+                                </div>
+                            </template>
+                            <template slot-scope="scope">
+                                <i class="el-icon-document"></i>
+                                {{scope.row.filename}}
+                            </template>
+                        </el-table-column>
+                        <el-table-column width="250">
+                            <template slot="header" slot-scope="scope">
+                                Progress ({{loadingCount}} downloading)
+                            </template>
+                            <template slot-scope="scope">
+                                <div style="display: flex; flex-direction: row; justify-content: stretch; align-items: center">
+                                    <template v-if="scope.row.status === 'loading'">
+                                        <el-progress style="width: 80%" :percentage="scope.row.progress"></el-progress>
+                                        <el-link type="info" @click="handleAbortTask(scope.row)">
+                                            stop
+                                        </el-link>
+                                    </template>
+                                    <el-link
+                                            v-if="scope.row.status === 'success'"
+                                            type="success"
+                                            @click="handleRevealFile(scope.row)"
+                                    >
+                                        <i class="el-icon-circle-check"/>
+                                        success
+                                    </el-link>
+                                    <el-link
+                                            v-if="scope.row.status === 'fail'"
+                                            type="danger"
+                                            @click="handleResumeTask(scope.row)"
+                                    >
+                                        <i class="el-icon-circle-close"/>
+                                        fail
+                                    </el-link>
+                                    <el-link
+                                            v-if="scope.row.status === 'aborted'"
+                                            type="warning"
+                                            @click="handleResumeTask(scope.row)">
+                                        <i class="el-icon-warning-outline"/>
+                                        aborted
+                                    </el-link>
+                                    <el-link
+                                            v-if="scope.row.status === 'aborted'"
+                                            style="margin-left: 10px" type="danger"
+                                            @click="handleRemoveTask(scope.row)">
+                                        remove
+                                    </el-link>
+                                    <el-link
+                                            v-if="scope.row.status === 'waiting'"
+                                            type="info"
+                                            @click="handleAbortTask(scope.row)"
+                                    >
+                                        waiting...
+                                    </el-link>
+                                </div>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </el-container>
+            </transition>
+        </el-container>
+    </template>
+</div>
+</body>
+
+<style>
+    .el-header {
+        color: #333;
+        font-family: "Lucida Grande", sans-serif;
+    }
+
+    .el-aside {
+        color: #333;
+        font-family: "Lucida Grande", sans-serif;
+    }
+    .el-main {
+        font-family: "Lucida Grande", sans-serif;
+    }
+    .row-bg {
+        padding: 10px 0;
+    }
+
+    /deep/ .el-select {
+        height: 35px;
+    }
+    .el-input__inner {
+        height: 35px !important;
+    }
+    .el-select__tags {
+        flex-wrap: unset; overflow: auto;
+    }
+
+</style>
+
+<script>
+    const { DownloadQueue } = require('./core/download')
+    const { remote: { BrowserWindow, dialog, getCurrentWindow }, shell } = require('electron')
+    const crawler = require("./core/crawler.js")
+    const PDFWindow = require('electron-pdf-window')
+    const mainURL = 'https://papers.xtremepape.rs/'
+
+    new Vue({
+        el: '#app',
+        data: {
+            loading: true,
+            applicationVersion: "1.0.0",
+            multipleSelection: [],
+            tableLoading: false,
+            tableData: [],
+            starred: [],
+            activeIndex: 'main',
+            years: ['All years', '2019', '2018', '2017'],
+            seasons: ['All seasons', 'March', 'May/June', 'November'],
+            nums: ['All papers', 'Paper 1', 'Paper 2'],
+            regions: ['All regions', 'Region 1', 'Region 2'],
+            types: ['All types', 'QP', 'MS', 'ER', 'GT'],
+            yearsSelected: ['All years'],
+            seasonsSelected: ['All seasons'],
+            numsSelected: ['All papers'],
+            regionsSelected: ['All regions'],
+            typesSelected: ['QP', 'MS'],
+            path: [],
+            displayFilter: false,
+            searchTable: '',
+            downloadTaskList: DownloadQueue.getTaskList(),
+            settings: {
+                useDefaultPath: false,
+                defaultPath: '',
+                createSubjectFolder: false,
+            },
+
+        },
+        created() {
+            this.visitHome()
+            this.loading = false
+        },
+        computed: {
+            shownDownloadTaskList() {
+                const front = []
+                const end = []
+                this.downloadTaskList.forEach(task =>
+                    ((task.status !== 'success') ? front : end).push(task))
+                return front.reverse().concat(end.reverse())
+            },
+            loadingCount() {
+                let count = 0
+                this.downloadTaskList.forEach(task => count +=
+                    (task.status === 'loading' || task.status === 'waiting') ? 1 : 0)
+                return count
+            },
+        },
+        methods: {
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+            },
+            async menuSelected(index) {
+                this.loading = true
+                this.activeIndex = index
+                this.loading = false
+            },
+            checkStarred(data) {
+                let starredURL = []
+                for (let i = 0; i < this.starred.length; i++) {
+                    starredURL.push(this.starred[i].url)
+                }
+
+                for (let i = 0; i < data.length; i++) {
+                    // console.log(data[i].url)
+                    if (data[i].type === 'folder') {
+                        data[i].starred = starredURL.includes(data[i].url);
+                    }
+                }
+                return data
+            },
+            renameFile(data) {
+                for (let i = 0; i < data.length; i++) {
+                    if (data[i].type === 'pdf') {
+                        data[i].name = renameCAIE(data[i].name)
+                    }
+                }
+                return data
+            },
+            visitHome() {
+                this.tableLoading = true;
+                this.path = []
+                crawler.getContent('').then(r => {
+                    this.tableData = this.checkStarred(r)
+                    this.tableLoading = false
+                }).catch(e => {
+                    alert('Internet Error.')
+                })
+            },
+            visitFolder(url) {
+                this.loading = true
+                this.tableLoading = true;// console.log(this.activeIndex)
+                const currPath = url.split('/')
+                currPath.pop()
+                this.path = currPath
+                this.activeIndex = "main";
+                crawler.getContent(url).then(r => {
+                    // console.log(r)
+                    this.searchTable = ''
+                    this.tableData = this.checkStarred(r)
+                    // if (this.path.length === 3 && this.path[0] === "CAIE") {
+                        // this.tableData = this.renameFile(this.tableData)
+                    // }
+                    this.tableLoading = false
+                    this.loading = false
+                    console.log('Loading end')
+                }).catch(e => {
+                    alert('Internet Error.')
+                })
+
+            },
+            navBread(index) {
+                const url = this.path.slice(0, index + 1).join('/') + '/'
+                this.visitFolder(url)
+            },
+            previewPDF(url) {
+                const win = new BrowserWindow({ width: 800, height: 600 })
+                PDFWindow.addSupport(win)
+                win.loadURL(mainURL + url)
+            },
+            starFolder(name, url) {
+                this.starred.push({name: name, url: url})
+            },
+            unStarFolder(url) {
+                for (let i = 0; i < this.starred.length; i++) {
+                    if (this.starred[i].url === url) {
+                        this.starred.splice(i, 1)
+                        break
+                    }
+                }
+                this.tableData = this.checkStarred(this.tableData)
+            },
+            getDownloadRowKey(row) {
+                return row.id
+            },
+            handleResumeAll() {
+                DownloadQueue.resumeAll()
+            },
+            handleAbortAll() {
+                DownloadQueue.abortAll()
+            },
+            handleClearDownload() {
+                DownloadQueue.clearTaskList()
+            },
+            handleResumeTask(task) {
+                task.resume()
+                console.log(task.status)
+            },
+            handleAbortTask(task) {
+                task.abort()
+            },
+            handleRemoveTask(task) {
+                DownloadQueue.removeTask(task)
+            },
+            handleRevealFile(task) {
+                shell.showItemInFolder(task.targetFilePath)
+            },
+            async handleClickDownload() {
+                let downloadPath = ''
+                if (this.settings.useDefaultPath) {
+                    downloadPath = this.settings.defaultPath
+                } else {
+                    const res = await dialog.showOpenDialog(getCurrentWindow(), {
+                        properties: ['openDirectory', 'createDirectory'],
+                    })
+                    if (res && !res.canceled && res.filePaths.length > 0) {
+                        downloadPath = res.filePaths[0]
+                    } else {
+                        return  // abort download if canceled
+                    }
+                }
+                // if (this.settings.createSubjectFolder) {
+                //     if (!downloadPath.endsWith('/'))
+                //         downloadPath += '/'
+                //     downloadPath += this.subjects[this.subject].label
+                // }
+                this.activeIndex = 'download'
+                this.multipleSelection.forEach(paper => {
+                    if (paper.selected) {
+                        DownloadQueue.addTask(paper.url, downloadPath)
+                    }
+                })
+            },
+        },
+    })
+</script>
+
+</html>
